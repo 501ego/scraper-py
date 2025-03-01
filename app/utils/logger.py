@@ -4,13 +4,13 @@ import sys
 
 class ColoredFormatter(logging.Formatter):
     """
-    Custom logging formatter to add colors based on log level.
+    Custom logging formatter that adds colors to log messages based on their level.
     """
     COLOR_CODES = {
-        logging.DEBUG: "\033[94m",    # Blue
-        logging.INFO: "\033[92m",     # Green
-        logging.WARNING: "\033[93m",  # Yellow
-        logging.ERROR: "\033[91m",    # Red
+        logging.DEBUG: "\033[94m",     # Blue
+        logging.INFO: "\033[92m",      # Green
+        logging.WARNING: "\033[93m",   # Yellow
+        logging.ERROR: "\033[91m",     # Red
         logging.CRITICAL: "\033[95m",  # Magenta
     }
     RESET_CODE = "\033[0m"
@@ -24,10 +24,10 @@ class ColoredFormatter(logging.Formatter):
 
 def get_logger(name: str) -> logging.Logger:
     """
-    Returns a logger with a colored console handler.
+    Returns a logger configured with a colored console handler.
     """
     logger = logging.getLogger(name)
-    logger.setLevel(logging.DEBUG)
+    logger.setLevel(logging.INFO)
     if not logger.handlers:
         handler = logging.StreamHandler(sys.stdout)
         handler.setLevel(logging.DEBUG)
