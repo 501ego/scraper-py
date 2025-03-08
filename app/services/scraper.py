@@ -5,9 +5,8 @@ from typing import Optional, List, Dict
 from app.utils.json_parser import extract_product_json
 import cloudscraper
 from bs4 import BeautifulSoup
-
 from app.config import HEADERS, BROWSER, service_name
-from app.utils.logger import get_logger
+from app.services.logger import get_logger
 
 logger = get_logger(service_name)
 
@@ -20,12 +19,12 @@ class ProductInfo:
     """
 
     def __init__(self, name: Optional[str] = None, price1: Optional[str] = None,
-                 price2: Optional[str] = None, old_price: Optional[str] = None,
+                 price2: Optional[str] = None, price3: Optional[str] = None,
                  timestamp: str = "") -> None:
         self.name = name
         self.price1 = price1
         self.price2 = price2
-        self.old_price = old_price
+        self.price3 = price3
         self.timestamp = timestamp
 
     def __repr__(self) -> str:
@@ -36,8 +35,8 @@ class ProductInfo:
             fields.append(f"price1={self.price1!r}")
         if self.price2 is not None:
             fields.append(f"price2={self.price2!r}")
-        if self.old_price is not None:
-            fields.append(f"old_price={self.old_price!r}")
+        if self.price3 is not None:
+            fields.append(f"price3={self.price3!r}")
         if self.timestamp:
             fields.append(f"timestamp={self.timestamp!r}")
         return f"ProductInfo({', '.join(fields)})"
@@ -62,39 +61,30 @@ class FalabellaScraper(BaseScraper):
 
     def get_page_source(self, url: str) -> str:
         max_retries = 3
-        last_status = None
         for attempt in range(max_retries):
             response = self.scraper.get(url, headers=HEADERS)
             if response.status_code == 200:
                 return response.text
             else:
-                logger.debug("Attempt %s: Error obtaining page, status code: %s",
-                             attempt + 1, response.status_code)
-                last_status = response.status_code
-                time.sleep(3)
-        logger.error("Error obtaining page, status code: %s", last_status)
+                logger.debug(
+                    "Attempt %s: Error obtaining page, status code: %s", attempt+1, response.status_code)
+                time.sleep(5)
+        logger.error("Failed to retrieve page after %s attempts.", max_retries)
         return ""
 
     def parse(self, html: str) -> ProductInfo:
         soup = BeautifulSoup(html, 'html.parser')
-        name_element = soup.select_one(
-            'h1.jsx-783883818.product-name.fa--product-name.false')
+        name_element = soup.find(
+            "h1", class_=lambda c: c and "product-name" in c)
         name = name_element.get_text(strip=True) if name_element else None
-
         li_cmr = soup.find("li", attrs={"data-cmr-price": True})
+        price_cmr = li_cmr.get("data-cmr-price") if li_cmr else None
         li_internet = soup.find("li", attrs={"data-internet-price": True})
-        price_cmr = li_cmr.find("span").get_text(
-            strip=True) if li_cmr and li_cmr.find("span") else None
-        price_internet = li_internet.find("span").get_text(
-            strip=True) if li_internet and li_internet.find("span") else None
-
-        return ProductInfo(
-            name=name,
-            price1=price_cmr,
-            price2=price_internet,
-            old_price=None,
-            timestamp=datetime.now().isoformat()
-        )
+        price_internet = li_internet.get(
+            "data-internet-price") if li_internet else None
+        li_normal = soup.find("li", attrs={"data-normal-price": True})
+        price3 = li_normal.get("data-normal-price") if li_normal else None
+        return ProductInfo(name=name, price1=price_cmr, price2=price_internet, price3=price3, timestamp=datetime.now().isoformat())
 
     def get_product_info(self, url: str) -> ProductInfo:
         html = self.get_page_source(url)
@@ -111,7 +101,7 @@ class ParisScraper(BaseScraper):
             prices: List[Dict[str, str]] = product_data.get("prices", [])
             price1 = None
             price2 = None
-            old_price = None
+            price3 = None
             for entry in prices:
                 price_book_id = entry.get("priceBookId", "")
                 if price_book_id == "clp-cencosud-prices":
@@ -119,12 +109,12 @@ class ParisScraper(BaseScraper):
                 elif price_book_id == "clp-internet-prices":
                     price2 = entry.get("price")
                 elif price_book_id == "clp-list-prices":
-                    old_price = entry.get("price")
+                    price3 = entry.get("price")
             result = ProductInfo(
                 name=name,
                 price1=price1,
                 price2=price2,
-                old_price=old_price,
+                price3=price3,
                 timestamp=datetime.now().isoformat()
             )
             logger.debug("Final result: %s", result)
@@ -136,7 +126,7 @@ class ParisScraper(BaseScraper):
                 name=None,
                 price1=None,
                 price2=None,
-                old_price=None,
+                price3=None,
                 timestamp=datetime.now().isoformat()
             )
 

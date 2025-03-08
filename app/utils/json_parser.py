@@ -1,6 +1,6 @@
 import json
 from typing import Optional
-from app.utils.logger import get_logger
+from app.services.logger import get_logger
 from app.config import service_name
 
 logger = get_logger(service_name)
@@ -13,8 +13,7 @@ def find_end_of_json(s: str, start_idx: int) -> int:
     brace_count = 0
     in_string = False
     escape = False
-    for i in range(start_idx, len(s)):
-        char = s[i]
+    for i, char in enumerate(s[start_idx:], start=start_idx):
         if char == '"' and not escape:
             in_string = not in_string
         if not in_string:
