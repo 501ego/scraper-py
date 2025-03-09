@@ -1,0 +1,50 @@
+services:
+  scraper_py:
+    image: scraper_py:latest
+    build: .
+    networks:
+      - scraper-network
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: any
+        delay: 5s
+        max_attempts: 0
+    secrets:
+      - openai_key
+      - mongo_uri
+      - mongo_db
+      - mongo_collection1
+      - mongo_collection2
+      - client_id
+      - guild_id
+      - channel_id
+      - discord_bot_token
+      - log_level
+    command: ['python', '-m', 'app.main']
+
+secrets:
+  openai_key:
+    external: true
+  mongo_uri:
+    external: true
+  mongo_db:
+    external: true
+  mongo_collection1:
+    external: true
+  mongo_collection2:
+    external: true
+  client_id:
+    external: true
+  guild_id:
+    external: true
+  channel_id:
+    external: true
+  discord_bot_token:
+    external: true
+  log_level:
+    external: true
+
+networks:
+  scraper-network:
+    external: true

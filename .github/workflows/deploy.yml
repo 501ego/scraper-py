@@ -1,0 +1,60 @@
+name: Deploy to VPS
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v3
+
+      - name: Set up SSH
+        uses: webfactory/ssh-agent@v0.5.3
+        with:
+          ssh-private-key: ${{ secrets.VPS_SSH_KEY }}
+
+      - name: Add known host
+        env:
+          VPS_IP: ${{ secrets.VPS_IP }}
+          VPS_PORT: ${{ secrets.VPS_PORT }}
+        run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          ssh-keyscan -p "$VPS_PORT" -H "$VPS_IP" >> ~/.ssh/known_hosts
+
+      - name: Copy files to VPS (excluding .git)
+        env:
+          VPS_USER: ${{ secrets.VPS_USER }}
+          VPS_IP: ${{ secrets.VPS_IP }}
+          VPS_PORT: ${{ secrets.VPS_PORT }}
+        run: |
+          rsync -avz --progress --exclude='.git' -e "ssh -p $VPS_PORT" . "$VPS_USER@$VPS_IP:/home/$VPS_USER/scraper_py"
+
+      - name: Build and deploy
+        env:
+          VPS_USER: ${{ secrets.VPS_USER }}
+          VPS_IP: ${{ secrets.VPS_IP }}
+          VPS_PORT: ${{ secrets.VPS_PORT }}
+        run: |
+          ssh -p "$VPS_PORT" "$VPS_USER@$VPS_IP" << EOF
+            set -e
+            mkdir -p "/home/$VPS_USER/scraper_py"
+            cd "/home/$VPS_USER/scraper_py"
+
+            docker swarm init || echo "Swarm already initialized"
+
+            # Remove old service if it exists
+            docker service rm scraper_py_scraper_py || echo "Service not found"
+
+            # Remove the old image
+            docker image rm scraper_py:latest || echo "Image not found"
+
+            # Build and redeploy
+            docker build -t scraper_py:latest .
+            docker stack deploy -c docker-compose.swarms.yml --resolve-image never scraper_py
+          EOF
