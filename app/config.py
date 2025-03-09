@@ -40,9 +40,24 @@ if not MONGO_URI:
 MONGO_DB = os.environ.get("MONGO_DB")
 if not MONGO_DB:
     raise ValueError("MONGO_DB environment variable is not set.")
-MONGO_COLLECTION = os.environ.get("MONGO_COLLECTION")
-if not MONGO_COLLECTION:
+MONGO_COLLECTION1 = os.environ.get("MONGO_COLLECTION1")
+if not MONGO_COLLECTION1:
     raise ValueError("MONGO_COLLECTION environment variable is not set.")
+MONGO_COLLECTION2 = os.environ.get("MONGO_COLLECTION2")
+if not MONGO_COLLECTION2:
+    raise ValueError("MONGO_COLLECTION2 environment variable is not set.")
+CLIENT_ID = os.environ.get("CLIENT_ID")
+if not CLIENT_ID:
+    raise ValueError("CLIENT_ID environment variable is not set.")
+GUILD_ID = os.environ.get("GUILD_ID")
+if not GUILD_ID:
+    raise ValueError("GUILD_ID environment variable is not set.")
+CHANNEL_ID = os.environ.get("CHANNEL_ID")
+if not CHANNEL_ID:
+    raise ValueError("CHANNEL_ID environment variable is not set.")
+DISCORD_BOT_TOKEN = os.environ.get("DISCORD_BOT_TOKEN")
+if not DISCORD_BOT_TOKEN:
+    raise ValueError("DISCORDJS_BOT_TOKEN environment variable is not set.")
 
 # Labels for logging each field per source.
 PARIS_LABELS = {
@@ -61,3 +76,4 @@ FALABELLA_LABELS = {
     "timestamp": "Timestamp"
 }
 PRICE_FIELDS = ["price1", "price2", "price3"]
+SOURCES = ["Paris", "Falabella"]
