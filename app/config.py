@@ -59,6 +59,10 @@ DISCORD_BOT_TOKEN = os.environ.get("DISCORD_BOT_TOKEN")
 if not DISCORD_BOT_TOKEN:
     raise ValueError("DISCORDJS_BOT_TOKEN environment variable is not set.")
 
+LOG_LEVEL = os.environ.get("LOG_LEVEL", "INFO")
+if LOG_LEVEL not in ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]:
+    raise ValueError("Invalid LOG_LEVEL environment variable.")
+
 # Labels for logging each field per source.
 PARIS_LABELS = {
     "name": "Product Name",
