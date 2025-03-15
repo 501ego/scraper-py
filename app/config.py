@@ -31,37 +31,63 @@ BROWSER = {
 
 service_name = 'scraper_py'
 
-OPENAI_KEY = os.environ.get('OPENAI_KEY')
-if not OPENAI_KEY:
-    raise ValueError("OPENAI_KEY environment variable is not set.")
-MONGO_URI = os.environ.get("MONGO_URI")
-if not MONGO_URI:
-    raise ValueError("MONGO_URI environment variable is not set.")
-MONGO_DB = os.environ.get("MONGO_DB")
-if not MONGO_DB:
-    raise ValueError("MONGO_DB environment variable is not set.")
-MONGO_COLLECTION1 = os.environ.get("MONGO_COLLECTION1")
-if not MONGO_COLLECTION1:
-    raise ValueError("MONGO_COLLECTION environment variable is not set.")
-MONGO_COLLECTION2 = os.environ.get("MONGO_COLLECTION2")
-if not MONGO_COLLECTION2:
-    raise ValueError("MONGO_COLLECTION2 environment variable is not set.")
-CLIENT_ID = os.environ.get("CLIENT_ID")
-if not CLIENT_ID:
-    raise ValueError("CLIENT_ID environment variable is not set.")
-GUILD_ID = os.environ.get("GUILD_ID")
-if not GUILD_ID:
-    raise ValueError("GUILD_ID environment variable is not set.")
-CHANNEL_ID = os.environ.get("CHANNEL_ID")
-if not CHANNEL_ID:
-    raise ValueError("CHANNEL_ID environment variable is not set.")
-DISCORD_BOT_TOKEN = os.environ.get("DISCORD_BOT_TOKEN")
-if not DISCORD_BOT_TOKEN:
-    raise ValueError("DISCORDJS_BOT_TOKEN environment variable is not set.")
 
-LOG_LEVEL = os.environ.get("LOG_LEVEL", "INFO")
+def get_secret_or_env(secret_name: str, env_name: str) -> str:
+    secret_path = f"/run/secrets/{secret_name}"
+    if os.path.exists(secret_path):
+        with open(secret_path, "r") as f:
+            return f.read().strip()
+    return os.environ.get(env_name)
+
+
+PROJECT_PREFIX = "scraper_py_"
+
+OPENAI_KEY = get_secret_or_env(f"{PROJECT_PREFIX}openai_key", "OPENAI_KEY")
+if not OPENAI_KEY:
+    raise ValueError("OPENAI_KEY environment variable or secret is not set.")
+
+MONGO_URI = get_secret_or_env(f"{PROJECT_PREFIX}mongo_uri", "MONGO_URI")
+if not MONGO_URI:
+    raise ValueError("MONGO_URI environment variable or secret is not set.")
+
+MONGO_DB = get_secret_or_env(f"{PROJECT_PREFIX}mongo_db", "MONGO_DB")
+if not MONGO_DB:
+    raise ValueError("MONGO_DB environment variable or secret is not set.")
+
+MONGO_COLLECTION1 = get_secret_or_env(
+    f"{PROJECT_PREFIX}mongo_collection1", "MONGO_COLLECTION1")
+if not MONGO_COLLECTION1:
+    raise ValueError(
+        "MONGO_COLLECTION1 environment variable or secret is not set.")
+
+MONGO_COLLECTION2 = get_secret_or_env(
+    f"{PROJECT_PREFIX}mongo_collection2", "MONGO_COLLECTION2")
+if not MONGO_COLLECTION2:
+    raise ValueError(
+        "MONGO_COLLECTION2 environment variable or secret is not set.")
+
+CLIENT_ID = get_secret_or_env(f"{PROJECT_PREFIX}client_id", "CLIENT_ID")
+if not CLIENT_ID:
+    raise ValueError("CLIENT_ID environment variable or secret is not set.")
+
+GUILD_ID = get_secret_or_env(f"{PROJECT_PREFIX}guild_id", "GUILD_ID")
+if not GUILD_ID:
+    raise ValueError("GUILD_ID environment variable or secret is not set.")
+
+CHANNEL_ID = get_secret_or_env(f"{PROJECT_PREFIX}channel_id", "CHANNEL_ID")
+if not CHANNEL_ID:
+    raise ValueError("CHANNEL_ID environment variable or secret is not set.")
+
+DISCORD_BOT_TOKEN = get_secret_or_env(
+    f"{PROJECT_PREFIX}discord_bot_token", "DISCORD_BOT_TOKEN")
+if not DISCORD_BOT_TOKEN:
+    raise ValueError(
+        "DISCORD_BOT_TOKEN environment variable or secret is not set.")
+
+LOG_LEVEL = get_secret_or_env(
+    f"{PROJECT_PREFIX}log_level", "LOG_LEVEL") or "INFO"
 if LOG_LEVEL not in ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]:
-    raise ValueError("Invalid LOG_LEVEL environment variable.")
+    raise ValueError("Invalid LOG_LEVEL environment variable or secret.")
 
 # Labels for logging each field per source.
 PARIS_LABELS = {
