@@ -1,4 +1,4 @@
-import time
+import asyncio
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Optional, List, Dict
@@ -48,30 +48,36 @@ class BaseScraper:
     def __init__(self) -> None:
         self.scraper = cloudscraper.create_scraper(browser=BROWSER)
 
-    def get_page_source(self, url: str) -> str:
-        response = self.scraper.get(url, headers=HEADERS)
+    async def get_page_source(self, url: str) -> str:
+        response = await asyncio.to_thread(self.scraper.get, url, headers=HEADERS)
         if response.status_code != 200:
             logger.error("Error obtaining page, status code: %s",
                          response.status_code)
         return response.text
 
 
+class PageRetrievalError(Exception):
+    """Custom exception raised when a page cannot be retrieved after retries."""
+    pass
+
+
 class FalabellaScraper(BaseScraper):
     """Scraper for Falabella with retry logic that returns ProductInfo objects."""
 
-    def get_page_source(self, url: str) -> str:
+    async def get_page_source(self, url: str) -> str:
         max_retries = 3
         for attempt in range(max_retries):
-            response = self.scraper.get(url, headers=HEADERS)
+            response = await asyncio.to_thread(self.scraper.get, url, headers=HEADERS)
             if response.status_code == 200:
                 return response.text
             else:
                 logger.debug(
                     "Attempt %s: Error obtaining page, status code: %s", attempt+1, response.status_code)
-                time.sleep(5)
-        error_message = f"Failed to retrieve page after {max_retries} attempts for URL: {url}"
-        logger.error(error_message)
-        raise RuntimeError(error_message)
+                # Use asyncio.sleep instead of time.sleep
+                await asyncio.sleep(5)
+        logger.error("Failed to retrieve page after %s attempts.", max_retries)
+        raise PageRetrievalError(
+            f"Failed to retrieve page after {max_retries} attempts for URL: {url}")
 
     def parse(self, html: str) -> ProductInfo:
         soup = BeautifulSoup(html, 'html.parser')
@@ -87,13 +93,8 @@ class FalabellaScraper(BaseScraper):
         price3 = li_normal.get("data-normal-price") if li_normal else None
         return ProductInfo(name=name, price1=price_cmr, price2=price_internet, price3=price3, timestamp=datetime.now().isoformat())
 
-    def get_product_info(self, url: str) -> ProductInfo:
-        try:
-            html = self.get_page_source(url)
-        except Exception as e:
-            logger.error("Error in get_product_info: %s", e)
-            return ProductInfo(name=None, price1=None, price2=None, price3=None,
-                               timestamp=datetime.now().isoformat())
+    async def get_product_info(self, url: str) -> ProductInfo:
+        html = await self.get_page_source(url)
         return self.parse(html)
 
 
@@ -136,7 +137,7 @@ class ParisScraper(BaseScraper):
                 timestamp=datetime.now().isoformat()
             )
 
-    def get_product_info(self, url: str) -> ProductInfo:
-        html = self.get_page_source(url)
+    async def get_product_info(self, url: str) -> ProductInfo:
+        html = await self.get_page_source(url)
         logger.debug("HTML length: %s", len(html))
         return self.parse(html)

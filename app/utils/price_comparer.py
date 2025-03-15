@@ -1,3 +1,4 @@
+import asyncio
 from dateutil import parser
 import discord
 from app.services.database import get_urls_by_source, store_product_info, info_collection
@@ -10,7 +11,7 @@ logger = get_logger(service_name)
 
 
 def compare_product_prices(url: str, new_info: ProductInfo, label_mapping: dict) -> None:
-    "Compares product prices for a URL and logs the differences."
+    """Compares product prices for a URL and logs the differences."""
     stored = info_collection.find_one({"url": url})
     if not stored:
         logger.warning("No record found for URL: %s", url)
@@ -33,7 +34,7 @@ def compare_product_prices(url: str, new_info: ProductInfo, label_mapping: dict)
 
 
 def format_comparison_details(url: str, new_info: ProductInfo, label_mapping: dict) -> str:
-    "Formats product information and price comparisons into a detailed multiline string using markdown."
+    """Formats product information and price comparisons into a detailed markdown string."""
     try:
         ts = parser.parse(new_info.timestamp)
         formatted_ts = ts.strftime("%d/%m/%Y %H:%M:%S")
@@ -67,12 +68,17 @@ def format_comparison_details(url: str, new_info: ProductInfo, label_mapping: di
     return info_section + changes
 
 
-def create_embed_for_url(source: str, url: str, scraper, label_mapping: dict, bot: discord.Client = None):
+async def create_embed_for_url(source: str, url: str, scraper, label_mapping: dict, bot: discord.Client = None) -> discord.Embed:
     """
     Creates a Discord embed for a given URL.
-    This function extracts per-URL logic from get_comparison_embeds to reduce nested complexity.
+    Awaits the asynchronous get_product_info method to get a ProductInfo object.
     """
-    info = scraper.get_product_info(url)
+    try:
+        info = await scraper.get_product_info(url)
+    except Exception as e:
+        logger.error("Error getting product info for %s: %s", url, e)
+        return None
+
     compare_product_prices(url, info, label_mapping)
     store_product_info(source, url, info, label_mapping)
     details = format_comparison_details(url, info, label_mapping)
@@ -87,8 +93,8 @@ def create_embed_for_url(source: str, url: str, scraper, label_mapping: dict, bo
     return embed
 
 
-def get_comparison_embeds(bot: discord.Client = None) -> list:
-    "Builds and returns a list of discord.Embed objects with detailed product comparisons."
+async def get_comparison_embeds(bot: discord.Client = None) -> list:
+    """Asynchronously builds and returns a list of discord.Embed objects with product comparisons."""
     embeds = []
     for source in SOURCES:
         if source.lower() == "paris":
@@ -101,8 +107,7 @@ def get_comparison_embeds(bot: discord.Client = None) -> list:
             continue
         urls = get_urls_by_source(source)
         for url in urls:
-            embed = create_embed_for_url(
-                source, url, scraper, label_mapping, bot)
+            embed = await create_embed_for_url(source, url, scraper, label_mapping, bot)
             if embed is not None:
                 embeds.append(embed)
     return embeds

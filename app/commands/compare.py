@@ -18,7 +18,7 @@ async def compare(interaction: discord.Interaction):
         )
         return
     await interaction.response.defer()
-    embeds = get_comparison_embeds(bot=interaction.client)
+    embeds = await get_comparison_embeds(bot=interaction.client)
     if embeds:
         await interaction.followup.send(embeds=embeds)
     else:
