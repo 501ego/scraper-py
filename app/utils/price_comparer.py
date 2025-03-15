@@ -94,8 +94,10 @@ async def create_embed_for_url(source: str, url: str, scraper, label_mapping: di
 
 
 async def get_comparison_embeds(bot: discord.Client = None) -> list:
-    """Asynchronously builds and returns a list of discord.Embed objects with product comparisons."""
-    embeds = []
+    """Asynchronously builds and returns a list of discord.Embed objects with product comparisons,
+    processing all URLs in parallel for efficiency.
+    """
+    tasks = []
     for source in SOURCES:
         if source.lower() == "paris":
             scraper = ParisScraper()
@@ -107,7 +109,9 @@ async def get_comparison_embeds(bot: discord.Client = None) -> list:
             continue
         urls = get_urls_by_source(source)
         for url in urls:
-            embed = await create_embed_for_url(source, url, scraper, label_mapping, bot)
-            if embed is not None:
-                embeds.append(embed)
+            tasks.append(create_embed_for_url(
+                source, url, scraper, label_mapping, bot))
+    results = await asyncio.gather(*tasks, return_exceptions=True)
+    embeds = [embed for embed in results if embed is not None and not isinstance(
+        embed, Exception)]
     return embeds

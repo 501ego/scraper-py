@@ -49,7 +49,7 @@ class BaseScraper:
     """Base class for scrapers. Uses Playwright to fetch page source."""
 
     def __init__(self) -> None:
-        # load_cookies_from_json(self.scraper)  # (Optional: if you want to load cookies)
+        # load_cookies_from_json(self.scraper)
         pass
 
     async def get_page_source(self, url: str) -> str:
