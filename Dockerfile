@@ -19,25 +19,23 @@ RUN apt-get update && \
         openvpn && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
-
 # Set working directory
 WORKDIR /app
 
 # Copy and install Python dependencies
 COPY requirements.txt ./
-RUN pip install --no-cache-dir -r requirements.txt
+
+RUN pip install --no-cache-dir -r requirements.txt && pip install playwright
 
 # Set environment variable so that Playwright uses local installation for browsers
 ENV PLAYWRIGHT_BROWSERS_PATH=0
 
-# Install Playwright system dependencies (if needed) using playwright's helper script
-# This installs additional libraries required by the browsers.
+# Install Playwright system dependencies and download browsers
 RUN python -m playwright install-deps && python -m playwright install
 
 # Copy application source code
 COPY . .
 
-# (Optional) Create required directories and set permissions (similar to your Node.js Dockerfile)
 RUN mkdir -p /app/temp /app/services && \
     touch /app/services/auth.txt && \
     chmod 600 /app/services/auth.txt && \
