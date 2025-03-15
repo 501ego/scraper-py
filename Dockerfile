@@ -32,7 +32,7 @@ ENV PLAYWRIGHT_BROWSERS_PATH=0
 
 # Install Playwright system dependencies (if needed) using playwright's helper script
 # This installs additional libraries required by the browsers.
-RUN playwright install-deps && playwright install
+RUN python -m playwright install-deps && python -m playwright install
 
 # Copy application source code
 COPY . .
