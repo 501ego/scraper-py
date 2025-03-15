@@ -3,12 +3,13 @@ import random
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Optional, List, Dict
-from app.utils.cookies import load_cookies_from_json
 from app.utils.json_parser import extract_product_json
-import cloudscraper
+from playwright.async_api import async_playwright
 from bs4 import BeautifulSoup
-from app.config import HEADERS, BROWSER, service_name
+from app.config import HEADERS, service_name
 from app.services.logger import get_logger
+import os
+os.environ["PLAYWRIGHT_BROWSERS_PATH"] = "0"
 
 logger = get_logger(service_name)
 
@@ -45,19 +46,25 @@ class ProductInfo:
 
 
 class BaseScraper:
-    """Base class for scrapers."""
+    """Base class for scrapers. Uses Playwright to fetch page source."""
 
     def __init__(self) -> None:
-        self.scraper = cloudscraper.create_scraper(browser=BROWSER)
-        load_cookies_from_json(self.scraper)
+        # load_cookies_from_json(self.scraper)  # (Optional: if you want to load cookies)
+        pass
 
     async def get_page_source(self, url: str) -> str:
         await asyncio.sleep(random.uniform(1, 3))
-        response = await asyncio.to_thread(self.scraper.get, url, headers=HEADERS)
-        if response.status_code != 200:
-            logger.error("Error obtaining page, status code: %s",
-                         response.status_code)
-        return response.text
+        async with async_playwright() as p:
+            browser = await p.chromium.launch(headless=True)
+            context = await browser.new_context(
+                user_agent=HEADERS.get("User-Agent"),
+                extra_http_headers=HEADERS
+            )
+            page = await context.new_page()
+            await page.goto(url, timeout=60000)
+            content = await page.content()
+            await browser.close()
+            return content
 
 
 class PageRetrievalError(Exception):
@@ -72,12 +79,18 @@ class FalabellaScraper(BaseScraper):
         max_retries = 2
         for attempt in range(max_retries):
             await asyncio.sleep(random.uniform(1, 3))
-            response = await asyncio.to_thread(self.scraper.get, url, headers=HEADERS)
-            if response.status_code == 200:
-                return response.text
+            try:
+                text = await super().get_page_source(url)
+            except Exception as e:
+                logger.debug(
+                    "Attempt %s: Exception obtaining page: %s", attempt+1, e)
+                await asyncio.sleep(random.uniform(3, 6))
+                continue
+            if text and "captcha" not in text.lower():
+                return text
             else:
                 logger.debug(
-                    "Attempt %s: Error obtaining page, status code: %s", attempt+1, response.status_code)
+                    "Attempt %s: Page content did not pass validation.", attempt+1)
                 await asyncio.sleep(random.uniform(3, 6))
         logger.error("Failed to retrieve page after %s attempts.", max_retries)
         raise PageRetrievalError(
@@ -122,8 +135,13 @@ class ParisScraper(BaseScraper):
                     price2 = entry.get("price")
                 elif price_book_id == "clp-list-prices":
                     price3 = entry.get("price")
-            result = ProductInfo(name=name, price1=price1, price2=price2, price3=price3,
-                                 timestamp=datetime.now().isoformat())
+            result = ProductInfo(
+                name=name,
+                price1=price1,
+                price2=price2,
+                price3=price3,
+                timestamp=datetime.now().isoformat()
+            )
             logger.debug("Final result: %s", result)
             return result
         else:
