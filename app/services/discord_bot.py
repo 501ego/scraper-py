@@ -5,6 +5,8 @@ from app.services.logger import get_logger
 from app.commands.add import add as add_command
 from app.commands.getlist import getlist as getlist_command
 from app.commands.compare import compare as compare_command
+from app.services.openvpn import ensure_vpn_connection
+import threading
 
 
 class DiscordBot(commands.Bot):
@@ -26,7 +28,9 @@ class DiscordBot(commands.Bot):
 
 
 def run_bot():
-    """Starts the Discord bot."""
+    """Starts the Discord bot and initiates the VPN connection."""
+    vpn_thread = threading.Thread(target=ensure_vpn_connection, daemon=True)
+    vpn_thread.start()
     intents = discord.Intents.default()
     intents.message_content = True
     bot = DiscordBot(command_prefix='!', intents=intents)

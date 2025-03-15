@@ -84,6 +84,14 @@ if not DISCORD_BOT_TOKEN:
     raise ValueError(
         "DISCORD_BOT_TOKEN environment variable or secret is not set.")
 
+VPN_USER = get_secret_or_env(f"{PROJECT_PREFIX}vpn_user", "VPN_USER")
+if not VPN_USER:
+    raise ValueError("VPN_USER environment variable or secret is not set.")
+
+VPN_PASS = get_secret_or_env(f"{PROJECT_PREFIX}vpn_pass", "VPN_PASS")
+if not VPN_PASS:
+    raise ValueError("VPN_PASS environment variable or secret is not set.")
+
 LOG_LEVEL = get_secret_or_env(
     f"{PROJECT_PREFIX}log_level", "LOG_LEVEL") or "INFO"
 if LOG_LEVEL not in ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]:
