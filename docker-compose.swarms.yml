@@ -10,6 +10,16 @@ services:
         condition: any
         delay: 5s
         max_attempts: 0
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    privileged: true
+    volumes:
+      - /dev/net/tun:/dev/net/tun
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
     secrets:
       - scraper_py_openai_key
       - scraper_py_mongo_uri
@@ -21,6 +31,8 @@ services:
       - scraper_py_channel_id
       - scraper_py_discord_bot_token
       - scraper_py_log_level
+      - scraper_py_vpn_user
+      - scraper_py_vpn_pass
     command: ['python', '-m', 'app.main']
 
 secrets:
@@ -43,6 +55,10 @@ secrets:
   scraper_py_discord_bot_token:
     external: true
   scraper_py_log_level:
+    external: true
+  scraper_py_vpn_user:
+    external: true
+  scraper_py_vpn_pass:
     external: true
 
 networks:

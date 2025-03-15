@@ -5,10 +5,11 @@ import threading
 import time
 import signal
 import logging
+from app.services.logger import get_logger
 
 from app.config import VPN_USER, VPN_PASS
 
-logger = logging.getLogger("vpn_connector")
+logger = get_logger("vpn_connector")
 logger.setLevel(logging.DEBUG)
 ch = logging.StreamHandler()
 ch.setLevel(logging.DEBUG)
