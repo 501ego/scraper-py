@@ -2,6 +2,7 @@ import asyncio
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Optional, List, Dict
+from app.utils.cookies import load_cookies_from_json
 from app.utils.json_parser import extract_product_json
 import cloudscraper
 from bs4 import BeautifulSoup
@@ -47,6 +48,7 @@ class BaseScraper:
 
     def __init__(self) -> None:
         self.scraper = cloudscraper.create_scraper(browser=BROWSER)
+        load_cookies_from_json(self.scraper)
 
     async def get_page_source(self, url: str) -> str:
         response = await asyncio.to_thread(self.scraper.get, url, headers=HEADERS)
@@ -65,7 +67,7 @@ class FalabellaScraper(BaseScraper):
     """Scraper for Falabella with retry logic that returns ProductInfo objects."""
 
     async def get_page_source(self, url: str) -> str:
-        max_retries = 3
+        max_retries = 2
         for attempt in range(max_retries):
             response = await asyncio.to_thread(self.scraper.get, url, headers=HEADERS)
             if response.status_code == 200:
@@ -73,7 +75,6 @@ class FalabellaScraper(BaseScraper):
             else:
                 logger.debug(
                     "Attempt %s: Error obtaining page, status code: %s", attempt+1, response.status_code)
-                # Use asyncio.sleep instead of time.sleep
                 await asyncio.sleep(5)
         logger.error("Failed to retrieve page after %s attempts.", max_retries)
         raise PageRetrievalError(
