@@ -1,4 +1,5 @@
-from pymongo import MongoClient
+import datetime
+from pymongo import MongoClient, DESCENDING
 from app.config import MONGO_URI, MONGO_DB, MONGO_COLLECTION1, MONGO_COLLECTION2, service_name, PRICE_FIELDS
 from app.services.logger import get_logger
 from app.services.scraper import ProductInfo
@@ -8,8 +9,9 @@ logger = get_logger(service_name)
 
 client = MongoClient(MONGO_URI)
 db = client[MONGO_DB]
+
 info_collection = db[MONGO_COLLECTION1]
-info_collection.create_index("url")
+info_collection.create_index([("url", DESCENDING), ("timestamp", DESCENDING)])
 urls_collection = db[MONGO_COLLECTION2]
 urls_collection.create_index("source", unique=True)
 
@@ -23,40 +25,67 @@ def has_valid_price(new_info: ProductInfo) -> bool:
 
 
 def should_store_product_info(url: str, new_info: ProductInfo, label_mapping: dict) -> bool:
-    "Determines if the new product info should be stored based on price changes."
-    latest_cursor = info_collection.find({"url": url}).sort(
-        label_mapping.get("timestamp", "timestamp"), -1).limit(1)
-    latest_doc = next(latest_cursor, None)
+    """Determines if new product info should be stored based on price changes."""
+    latest_doc = info_collection.find_one(
+        {"url": url}, sort=[("timestamp", DESCENDING)])
     if not latest_doc:
+        logger.debug(
+            "No previous document found for URL: %s. Will store new info.", url)
         return True
+
     for field in PRICE_FIELDS:
-        field_label = label_mapping.get(field, field)
+        label = label_mapping.get(field, field)
         new_price = parse_price(getattr(new_info, field))
-        stored_price = parse_price(latest_doc.get(field_label))
+        stored_price = latest_doc.get(label)
+
         if new_price is None or stored_price is None:
             continue
+
         if new_price != stored_price:
+            logger.debug(
+                "Price change detected for URL: %s (Field: %s, Old: %s, New: %s)",
+                url, label, stored_price, new_price
+            )
             return True
+
+    logger.debug("No price changes detected for URL: %s.", url)
     return False
 
 
 def store_product_info(prefix: str, url: str, info: ProductInfo, label_mapping: dict) -> None:
-    "Stores the product information in the database if valid and changed."
+    """Stores the product information as a new document whenever prices change, keeping historical records."""
     if not has_valid_price(info):
         logger.warning("No valid prices for URL: %s. Skipping storage.", url)
         return
+
     if not should_store_product_info(url, info, label_mapping):
-        logger.debug(
-            "No price change detected for URL: %s. Skipping storage.", url)
+        logger.debug("No price changes for URL: %s. Skipping storage.", url)
         return
-    document = {"prefix": prefix, "url": url}
-    for field, label in label_mapping.items():
-        document[label] = getattr(info, field)
+
+    document = {
+        "prefix": prefix,
+        "url": url,
+        "timestamp": datetime.datetime.fromisoformat(info.timestamp),
+        "product_name": info.name
+    }
+
+    for field in PRICE_FIELDS:
+        label = label_mapping.get(field, field)
+        price = parse_price(getattr(info, field))
+        if price is not None and price < 1e15:
+            document[label] = price
+        else:
+            logger.warning(
+                "Price too large or invalid for field %s on URL %s: %s", label, url, price)
+            document[label] = None
+
     try:
         result = info_collection.insert_one(document)
-        logger.debug("Inserted product info with id: %s", result.inserted_id)
+        logger.info("Inserted new price record with id: %s for URL: %s",
+                    result.inserted_id, url)
     except Exception as e:
-        logger.error("Error inserting document for %s: %s", url, e)
+        logger.error(
+            "Failed to insert document for URL: %s. Error: %s", url, e)
 
 
 def add_url(source: str, url: str) -> None:
