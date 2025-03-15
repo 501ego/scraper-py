@@ -69,8 +69,9 @@ class FalabellaScraper(BaseScraper):
                 logger.debug(
                     "Attempt %s: Error obtaining page, status code: %s", attempt+1, response.status_code)
                 time.sleep(5)
-        logger.error("Failed to retrieve page after %s attempts.", max_retries)
-        return ""
+        error_message = f"Failed to retrieve page after {max_retries} attempts for URL: {url}"
+        logger.error(error_message)
+        raise RuntimeError(error_message)
 
     def parse(self, html: str) -> ProductInfo:
         soup = BeautifulSoup(html, 'html.parser')
@@ -87,7 +88,12 @@ class FalabellaScraper(BaseScraper):
         return ProductInfo(name=name, price1=price_cmr, price2=price_internet, price3=price3, timestamp=datetime.now().isoformat())
 
     def get_product_info(self, url: str) -> ProductInfo:
-        html = self.get_page_source(url)
+        try:
+            html = self.get_page_source(url)
+        except Exception as e:
+            logger.error("Error in get_product_info: %s", e)
+            return ProductInfo(name=None, price1=None, price2=None, price3=None,
+                               timestamp=datetime.now().isoformat())
         return self.parse(html)
 
 

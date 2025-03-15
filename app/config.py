@@ -4,27 +4,22 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
                   "AppleWebKit/537.36 (KHTML, like Gecko) "
-                  "Chrome/116.0.5845.141 Safari/537.36",
-    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,"
-              "image/avif,image/webp,*/*;q=0.8",
+                  "Chrome/114.0.0.0 Safari/537.36",
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
     "Accept-Language": "en-US,en;q=0.9",
-    "Accept-Encoding": "gzip, deflate, br",
+    "Accept-Encoding": "gzip, deflate",
     "Referer": "https://www.google.com/",
     "Connection": "keep-alive",
     "Upgrade-Insecure-Requests": "1",
     "Cache-Control": "no-cache",
     "Pragma": "no-cache",
-    "Sec-CH-UA": '"Chromium";v="116", "Google Chrome";v="116", "Not:A-Brand";v="99"',
-    "Sec-CH-UA-Mobile": "?0",
-    "Sec-CH-UA-Platform": '"Windows"',
     "Sec-Fetch-Dest": "document",
     "Sec-Fetch-Mode": "navigate",
-    "Sec-Fetch-Site": "none",
-    "Sec-Fetch-User": "?1",
-    "Origin": "https://www.falabella.com"
+    "Sec-Fetch-Site": "none"
 }
 
 
