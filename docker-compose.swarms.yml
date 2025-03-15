@@ -3,7 +3,7 @@ services:
     image: scraper_py:latest
     build: .
     networks:
-      - scraper-network
+      - swarm-network
     deploy:
       replicas: 1
       restart_policy:
@@ -46,5 +46,5 @@ secrets:
     external: true
 
 networks:
-  scraper-network:
+  swarm-network:
     external: true
