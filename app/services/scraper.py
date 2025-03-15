@@ -1,4 +1,5 @@
 import asyncio
+import random
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Optional, List, Dict
@@ -51,6 +52,7 @@ class BaseScraper:
         load_cookies_from_json(self.scraper)
 
     async def get_page_source(self, url: str) -> str:
+        await asyncio.sleep(random.uniform(1, 3))
         response = await asyncio.to_thread(self.scraper.get, url, headers=HEADERS)
         if response.status_code != 200:
             logger.error("Error obtaining page, status code: %s",
@@ -69,13 +71,14 @@ class FalabellaScraper(BaseScraper):
     async def get_page_source(self, url: str) -> str:
         max_retries = 2
         for attempt in range(max_retries):
+            await asyncio.sleep(random.uniform(1, 3))
             response = await asyncio.to_thread(self.scraper.get, url, headers=HEADERS)
             if response.status_code == 200:
                 return response.text
             else:
                 logger.debug(
                     "Attempt %s: Error obtaining page, status code: %s", attempt+1, response.status_code)
-                await asyncio.sleep(5)
+                await asyncio.sleep(random.uniform(3, 6))
         logger.error("Failed to retrieve page after %s attempts.", max_retries)
         raise PageRetrievalError(
             f"Failed to retrieve page after {max_retries} attempts for URL: {url}")
@@ -92,7 +95,8 @@ class FalabellaScraper(BaseScraper):
             "data-internet-price") if li_internet else None
         li_normal = soup.find("li", attrs={"data-normal-price": True})
         price3 = li_normal.get("data-normal-price") if li_normal else None
-        return ProductInfo(name=name, price1=price_cmr, price2=price_internet, price3=price3, timestamp=datetime.now().isoformat())
+        return ProductInfo(name=name, price1=price_cmr, price2=price_internet, price3=price3,
+                           timestamp=datetime.now().isoformat())
 
     async def get_product_info(self, url: str) -> ProductInfo:
         html = await self.get_page_source(url)
@@ -118,25 +122,15 @@ class ParisScraper(BaseScraper):
                     price2 = entry.get("price")
                 elif price_book_id == "clp-list-prices":
                     price3 = entry.get("price")
-            result = ProductInfo(
-                name=name,
-                price1=price1,
-                price2=price2,
-                price3=price3,
-                timestamp=datetime.now().isoformat()
-            )
+            result = ProductInfo(name=name, price1=price1, price2=price2, price3=price3,
+                                 timestamp=datetime.now().isoformat())
             logger.debug("Final result: %s", result)
             return result
         else:
             logger.debug(
                 "Could not extract JSON. Returning empty ProductInfo.")
-            return ProductInfo(
-                name=None,
-                price1=None,
-                price2=None,
-                price3=None,
-                timestamp=datetime.now().isoformat()
-            )
+            return ProductInfo(name=None, price1=None, price2=None, price3=None,
+                               timestamp=datetime.now().isoformat())
 
     async def get_product_info(self, url: str) -> ProductInfo:
         html = await self.get_page_source(url)
