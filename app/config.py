@@ -17,9 +17,9 @@ HEADERS = {
     "Upgrade-Insecure-Requests": "1",
     "Cache-Control": "no-cache",
     "Pragma": "no-cache",
-    "Sec-Fetch-Dest": "document",
-    "Sec-Fetch-Mode": "navigate",
-    "Sec-Fetch-Site": "none"
+    "Sec-CH-UA": '"Chromium";v="114", "Google Chrome";v="114", "Not:A-Brand";v="99"',
+    "Sec-CH-UA-Mobile": "?0",
+    "Sec-CH-UA-Platform": '"Windows"'
 }
 
 

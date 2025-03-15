@@ -21,10 +21,6 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 OVPN_CONFIG_PATH = os.path.join(BASE_DIR, "config.ovpn")
 AUTH_FILE_PATH = os.path.join(BASE_DIR, "auth.txt")
 
-
-logger.debug("OVPN_CONFIG_PATH: %s", OVPN_CONFIG_PATH)
-logger.debug("AUTH_FILE_PATH: %s", AUTH_FILE_PATH)
-
 if not os.path.exists(OVPN_CONFIG_PATH):
     logger.error("OpenVPN config file not found.")
     sys.exit(1)

@@ -5,8 +5,11 @@ from app.services.logger import get_logger
 from app.commands.add import add as add_command
 from app.commands.getlist import getlist as getlist_command
 from app.commands.compare import compare as compare_command
-from app.services.openvpn import ensure_vpn_connection
+from app.services.openvpn import connect_vpn, ensure_vpn_connection
 import threading
+import time
+
+logger = get_logger(service_name)
 
 
 class DiscordBot(commands.Bot):
@@ -27,10 +30,30 @@ class DiscordBot(commands.Bot):
         print(f'Logged in as {self.user}')
 
 
+def wait_for_vpn_connection():
+    """
+    Blocks until a VPN connection is established.
+    Repeatedly calls connect_vpn() until it succeeds.
+    """
+    while True:
+        try:
+            vpn_process = connect_vpn()
+            logger.info(
+                "VPN connection established. Proceeding with bot startup.")
+            return vpn_process
+        except Exception as e:
+            logger.error("Error connecting to VPN: %s", e)
+            logger.info("Retrying VPN connection in 10 seconds...")
+            time.sleep(10)
+
+
 def run_bot():
-    """Starts the Discord bot and initiates the VPN connection."""
+    """Starts the Discord bot only after the VPN connection is established."""
+    wait_for_vpn_connection()
+    # Start a background thread to maintain the VPN connection.
     vpn_thread = threading.Thread(target=ensure_vpn_connection, daemon=True)
     vpn_thread.start()
+
     intents = discord.Intents.default()
     intents.message_content = True
     bot = DiscordBot(command_prefix='!', intents=intents)
