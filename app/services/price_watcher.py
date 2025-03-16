@@ -2,9 +2,9 @@ import discord
 from discord.ext import tasks
 from app.services.database import get_all_urls, store_product_info
 from app.utils.price_comparer import get_previous_product_info
-from app.services.scraper import ParisScraper, FalabellaScraper
+from app.services.scraper import ParisScraper, FalabellaScraper, SpDigitalScraper
 from app.utils.price_parser import parse_price
-from app.config import PRICE_FIELDS, PARIS_LABELS, FALABELLA_LABELS, CHANNEL_ID, service_name
+from app.config import PRICE_FIELDS, PARIS_LABELS, FALABELLA_LABELS, CHANNEL_ID, SPDIGITAL_LABELS, service_name
 from app.services.logger import get_logger
 from dateutil import parser
 
@@ -21,7 +21,8 @@ class PriceWatcher:
         self.channel_id = CHANNEL_ID
         self.scrapers = {
             'paris': (ParisScraper(), PARIS_LABELS),
-            'falabella': (FalabellaScraper(), FALABELLA_LABELS)
+            'falabella': (FalabellaScraper(), FALABELLA_LABELS),
+            'spdigital': (SpDigitalScraper(), SPDIGITAL_LABELS)
         }
         self.channel = None
 

@@ -3,9 +3,9 @@ from dateutil import parser
 import discord
 from pymongo import DESCENDING
 from app.services.database import get_urls_by_source, store_product_info, info_collection
-from app.services.scraper import ParisScraper, FalabellaScraper, ProductInfo
+from app.services.scraper import ParisScraper, FalabellaScraper, ProductInfo, SpDigitalScraper
 from app.utils.price_parser import parse_price
-from app.config import PRICE_FIELDS, PARIS_LABELS, FALABELLA_LABELS, service_name, SOURCES
+from app.config import PRICE_FIELDS, PARIS_LABELS, FALABELLA_LABELS, SPDIGITAL_LABELS, service_name, SOURCES
 from app.services.logger import get_logger
 
 logger = get_logger(service_name)
@@ -68,9 +68,9 @@ def format_comparison_details(url: str, new_info: ProductInfo, label_mapping: di
             if new_price is None or stored_price is None:
                 continue
             if new_price > stored_price:
-                changes += f"🟢 **{field_label}** increased from {format_price(stored_price)} to {format_price(new_price)}\n\n"
+                changes += f"🔺 **{field_label}** increased from {format_price(stored_price)} to {format_price(new_price)}\n\n"
             elif new_price < stored_price:
-                changes += f"🔴 **{field_label}** decreased from {format_price(stored_price)} to {format_price(new_price)}\n\n"
+                changes += f"🔻 **{field_label}** decreased from {format_price(stored_price)} to {format_price(new_price)}\n\n"
 
     if not changes:
         changes = "**No price changes detected.**"
@@ -105,10 +105,17 @@ async def create_embed_for_url(source: str, url: str, scraper, label_mapping: di
 
 async def get_comparison_embeds(bot: discord.Client = None) -> list:
     tasks = []
+    scraper_mapping = {
+        "paris": (ParisScraper(), PARIS_LABELS),
+        "falabella": (FalabellaScraper(), FALABELLA_LABELS),
+        "spdigital": (SpDigitalScraper(), SPDIGITAL_LABELS)
+    }
     for source in SOURCES:
-        scraper = ParisScraper() if source.lower() == "paris" else FalabellaScraper()
-        label_mapping = PARIS_LABELS if source.lower() == "paris" else FALABELLA_LABELS
+        source_key = source.lower().replace(" ", "")
+        if source_key not in scraper_mapping:
+            continue
 
+        scraper, label_mapping = scraper_mapping[source_key]
         urls = get_urls_by_source(source)
         for url in urls:
             tasks.append(create_embed_for_url(

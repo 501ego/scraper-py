@@ -98,18 +98,46 @@ class FalabellaScraper(BaseScraper):
 
     def parse(self, html: str) -> ProductInfo:
         soup = BeautifulSoup(html, 'html.parser')
+
         name_element = soup.find(
             "h1", class_=lambda c: c and "product-name" in c)
         name = name_element.get_text(strip=True) if name_element else None
-        li_cmr = soup.find("li", attrs={"data-cmr-price": True})
-        price_cmr = li_cmr.get("data-cmr-price") if li_cmr else None
-        li_internet = soup.find("li", attrs={"data-internet-price": True})
-        price_internet = li_internet.get(
-            "data-internet-price") if li_internet else None
-        li_normal = soup.find("li", attrs={"data-normal-price": True})
-        price3 = li_normal.get("data-normal-price") if li_normal else None
-        return ProductInfo(name=name, price1=price_cmr, price2=price_internet, price3=price3,
-                           timestamp=datetime.now().isoformat())
+
+        prices_container = soup.find(
+            "ol",
+            class_="jsx-3339469769 ol-4_GRID pdp-prices fa--prices li-separation"
+        )
+
+        price_cmr = None
+        price_internet = None
+        price_normal = None
+
+        if prices_container:
+            li_cmr = prices_container.find(
+                "li", attrs={"data-cmr-price": True})
+            price_cmr = li_cmr.get("data-cmr-price") if li_cmr else None
+            li_internet = prices_container.find(
+                "li", attrs={"data-internet-price": True})
+            if li_internet:
+                price_internet = li_internet.get("data-internet-price")
+            else:
+                li_event = prices_container.find(
+                    "li", attrs={"data-event-price": True})
+                price_internet = li_event.get(
+                    "data-event-price") if li_event else None
+
+            li_normal = prices_container.find(
+                "li", attrs={"data-normal-price": True})
+            price_normal = li_normal.get(
+                "data-normal-price") if li_normal else None
+
+        return ProductInfo(
+            name=name,
+            price1=price_cmr,
+            price2=price_internet,
+            price3=price_normal,
+            timestamp=datetime.now().isoformat()
+        )
 
     async def get_product_info(self, url: str) -> ProductInfo:
         html = await self.get_page_source(url)
@@ -153,4 +181,64 @@ class ParisScraper(BaseScraper):
     async def get_product_info(self, url: str) -> ProductInfo:
         html = await self.get_page_source(url)
         logger.debug("HTML length: %s", len(html))
+        return self.parse(html)
+
+
+class SpDigitalScraper(BaseScraper):
+    """
+    Scraper for SP Digital that extracts product data from the page source.
+    Relevant price values:
+      - Normal: The original price (displayed with a strikethrough)
+      - Pago con transferencia: Price when paying via bank transfer
+      - Otros medios de pago: Price for other payment methods
+    """
+
+    def _extract_price(self, container, label_text, mode="sibling"):
+        """Extract price based on a label and search mode."""
+        label_elem = container.find(
+            "span", string=lambda s: s and label_text in s)
+        if not label_elem:
+            return None
+
+        price_elem = None
+        if mode == "sibling":
+            price_elem = label_elem.find_next_sibling("span")
+        elif mode == "updating":
+            price_container = label_elem.find_next(
+                "span", class_="product-detail-module--updatingPriceContainer--mq+El")
+            if price_container:
+                price_elem = price_container.find("span")
+
+        if price_elem and "$" in price_elem.get_text():
+            return price_elem.get_text(strip=True)
+        return None
+
+    def parse(self, html: str) -> ProductInfo:
+        soup = BeautifulSoup(html, 'html.parser')
+
+        name_element = soup.find(
+            "h1", class_=lambda c: c and "product-detail-module--productName" in c)
+        name = name_element.get_text(strip=True) if name_element else None
+
+        container = soup.find(
+            "div", class_="product-detail-module--priceContainer--DKoen")
+        if not container:
+            return ProductInfo(name=name, timestamp=datetime.now().isoformat())
+
+        price_normal = self._extract_price(container, "Normal", mode="sibling")
+        price_transfer = self._extract_price(
+            container, "Pago con transferencia", mode="updating")
+        price_other = self._extract_price(
+            container, "Otros medios de pago", mode="updating")
+
+        return ProductInfo(
+            name=name,
+            price1=price_normal,
+            price2=price_transfer,
+            price3=price_other,
+            timestamp=datetime.now().isoformat()
+        )
+
+    async def get_product_info(self, url: str) -> ProductInfo:
+        html = await self.get_page_source(url)
         return self.parse(html)

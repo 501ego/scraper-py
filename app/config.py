@@ -112,5 +112,15 @@ FALABELLA_LABELS = {
     "price3": "Normal Price",
     "timestamp": "Timestamp"
 }
+
+SPDIGITAL_LABELS = {
+    "name": "Product Name",
+    "price1": "Normal Price",
+    "price2": "Transfer Payment Price",
+    "price3": "Other Payment Methods Price",
+    "timestamp": "Timestamp"
+}
+
+
 PRICE_FIELDS = ["price1", "price2", "price3"]
-SOURCES = ["Paris", "Falabella"]
+SOURCES = ["Paris", "Falabella", "Spdigital"]

@@ -10,7 +10,7 @@ from app.services.logger import get_logger
 from app.config import VPN_USER, VPN_PASS
 
 logger = get_logger("vpn_connector")
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.INFO)
 ch = logging.StreamHandler()
 ch.setLevel(logging.DEBUG)
 formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
