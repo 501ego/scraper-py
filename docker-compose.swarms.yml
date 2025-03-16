@@ -14,7 +14,6 @@ services:
       - NET_ADMIN
     devices:
       - /dev/net/tun:/dev/net/tun
-    privileged: true
     volumes:
       - /dev/net/tun:/dev/net/tun
     dns:
