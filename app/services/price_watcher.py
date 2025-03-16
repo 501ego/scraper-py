@@ -87,7 +87,7 @@ class PriceWatcher:
         await self.bot.wait_until_ready()
         self.channel = await self.bot.fetch_channel(self.channel_id)
         if self.channel:
-            logger.info(
+            logger.debug(
                 f"Price watcher ready, using channel {self.channel.name} ({self.channel.id}).")
         else:
             logger.error("Channel is None. Task cannot run.")
