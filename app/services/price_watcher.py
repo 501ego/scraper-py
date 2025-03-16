@@ -25,7 +25,7 @@ class PriceWatcher:
         }
         self.channel = None
 
-    @tasks.loop(hours=1)
+    @tasks.loop(hours=2)
     async def watch_prices(self):
         if self.channel is None:
             logger.error("Channel is None. Task cannot run.")
