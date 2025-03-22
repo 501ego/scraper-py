@@ -1,39 +1,7 @@
 import discord
 from discord import app_commands
 from app.config import CHANNEL_ID, GUILD_ID
-from app.services.database import get_all_urls, delete_url
-
-
-class URLSelect(discord.ui.Select):
-    def __init__(self, urls_list):
-        self.urls_list = urls_list
-        options = []
-        for idx, (source, url) in enumerate(urls_list, start=1):
-            options.append(
-                discord.SelectOption(
-                    label=f"{idx}. {source}",
-                    value=str(idx),
-                    description=url[:50]
-                )
-            )
-        super().__init__(
-            placeholder="Select a URL to delete",
-            min_values=1,
-            max_values=1,
-            options=options
-        )
-
-    async def callback(self, interaction: discord.Interaction):
-        selected_idx = int(self.values[0])
-        source, url_to_delete = self.urls_list[selected_idx - 1]
-        delete_url(source, url_to_delete)
-        await interaction.response.send_message(f"URL deleted: {url_to_delete}", ephemeral=True)
-
-
-class URLSelectView(discord.ui.View):
-    def __init__(self, urls_list, timeout=180):
-        super().__init__(timeout=timeout)
-        self.add_item(URLSelect(urls_list))
+from app.services.database import get_all_urls
 
 
 @app_commands.guilds(discord.Object(id=GUILD_ID))
@@ -45,14 +13,12 @@ async def getlist(interaction: discord.Interaction):
 
     docs = get_all_urls()
     description = ""
-    urls_list = []
     global_index = 1
     for doc in docs:
         source = doc.get("source", "Unknown")
         urls = doc.get("urls", [])
         for url in urls:
             description += f"**{global_index}. {source}:** {url}\n"
-            urls_list.append((source, url))
             global_index += 1
         description += "\n"
 
@@ -66,8 +32,4 @@ async def getlist(interaction: discord.Interaction):
         icon_url=interaction.client.user.display_avatar.url
     )
 
-    if urls_list:
-        view = URLSelectView(urls_list)
-        await interaction.response.send_message(embed=embed, view=view)
-    else:
-        await interaction.response.send_message(embed=embed)
+    await interaction.response.send_message(embed=embed)

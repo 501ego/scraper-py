@@ -95,8 +95,11 @@ def add_url(source: str, url: str) -> None:
         if url not in doc.get("urls", []):
             urls_collection.update_one(
                 {"source": source}, {"$push": {"urls": url}})
+            return url
     else:
         urls_collection.insert_one({"source": source, "urls": [url]})
+        return url
+    return None
 
 
 def update_url(source: str, old_url: str, new_url: str) -> None:

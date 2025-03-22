@@ -28,6 +28,7 @@ async def add(interaction: discord.Interaction, url: str):
         return
 
     added = add_url(source, url)
+    print(f"URL Added: {added}")
     if added:
         embed = discord.Embed(
             title="URL Added",
@@ -36,7 +37,7 @@ async def add(interaction: discord.Interaction, url: str):
         )
     else:
         embed = discord.Embed(
-            title="Already Exists in Scraoer Repository",
+            title="Already Exists in Scraper Repository",
             description=f"Source: **{source}**\nURL: **{url}**",
             color=0xff0000
         )

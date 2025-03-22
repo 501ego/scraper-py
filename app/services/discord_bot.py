@@ -5,6 +5,7 @@ from app.services.logger import get_logger
 from app.commands.add import add as add_command
 from app.commands.getlist import getlist as getlist_command
 from app.commands.compare import compare as compare_command
+from app.commands.delete import delete as delete_command
 from app.services.openvpn import connect_vpn, ensure_vpn_connection
 from app.services.price_watcher import PriceWatcher
 import threading
@@ -25,6 +26,7 @@ class DiscordBot(commands.Bot):
         self.tree.add_command(add_command)
         self.tree.add_command(getlist_command)
         self.tree.add_command(compare_command)
+        self.tree.add_command(delete_command)
         await self.tree.sync(guild=discord.Object(id=GUILD_ID))
         self.price_watcher.watch_prices.start()
 
