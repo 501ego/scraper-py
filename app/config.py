@@ -97,28 +97,31 @@ if LOG_LEVEL not in ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]:
     raise ValueError("Invalid LOG_LEVEL environment variable or secret.")
 
 # Labels for logging each field per source.
+PRODUCT_NAME = "Product Name"
+TIMESTAMP_LABEL = "Timestamp"
+NORMAL_PRICE = "Normal Price"
 PARIS_LABELS = {
-    "name": "Product Name",
+    "name": PRODUCT_NAME,
     "price1": "Cencosud Price",
     "price2": "Internet Price",
-    "price3": "Normal Price",
-    "timestamp": "Timestamp"
+    "price3": NORMAL_PRICE,
+    "timestamp": TIMESTAMP_LABEL
 }
 
 FALABELLA_LABELS = {
-    "name": "Product Name",
+    "name": PRODUCT_NAME,
     "price1": "CMR Price",
     "price2": "Internet Price",
-    "price3": "Normal Price",
-    "timestamp": "Timestamp"
+    "price3": NORMAL_PRICE,
+    "timestamp": TIMESTAMP_LABEL
 }
 
 SPDIGITAL_LABELS = {
-    "name": "Product Name",
-    "price1": "Normal Price",
+    "name": PRODUCT_NAME,
+    "price1": NORMAL_PRICE,
     "price2": "Transfer Payment Price",
     "price3": "Other Payment Methods Price",
-    "timestamp": "Timestamp"
+    "timestamp": TIMESTAMP_LABEL
 }
 
 
