@@ -1,4 +1,4 @@
-from app.services.scraper import ProductInfo
+from app.services.scrapers.base_scraper import ProductInfo
 from app.services.logger import get_logger
 from app.config import service_name
 

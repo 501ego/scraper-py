@@ -1,7 +1,9 @@
 import discord
 from discord import app_commands
 from app.config import CHANNEL_ID, GUILD_ID, SOURCES, PARIS_LABELS, FALABELLA_LABELS, SPDIGITAL_LABELS
-from app.services.scraper import ParisScraper, FalabellaScraper, SpDigitalScraper
+from app.services.scrapers.falabella_scraper import FalabellaScraper
+from app.services.scrapers.paris_scraper import ParisScraper
+from app.services.scrapers.spdigital_scraper import SpDigitalScraper
 from app.utils.price_comparer import create_embed_for_url
 from app.services.database import get_urls_by_source
 from app.services.logger import get_logger

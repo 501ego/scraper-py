@@ -3,7 +3,10 @@ from dateutil import parser
 import discord
 from pymongo import DESCENDING
 from app.services.database import get_urls_by_source, store_product_info, info_collection
-from app.services.scraper import ParisScraper, FalabellaScraper, ProductInfo, SpDigitalScraper
+from app.services.scrapers.base_scraper import ProductInfo
+from app.services.scrapers.falabella_scraper import FalabellaScraper
+from app.services.scrapers.paris_scraper import ParisScraper
+from app.services.scrapers.spdigital_scraper import SpDigitalScraper
 from app.utils.price_parser import parse_price
 from app.config import PRICE_FIELDS, PARIS_LABELS, FALABELLA_LABELS, SPDIGITAL_LABELS, service_name, SOURCES
 from app.services.logger import get_logger

@@ -2,7 +2,7 @@ import datetime
 from pymongo import MongoClient, DESCENDING
 from app.config import MONGO_URI, MONGO_DB, MONGO_COLLECTION1, MONGO_COLLECTION2, service_name, PRICE_FIELDS
 from app.services.logger import get_logger
-from app.services.scraper import ProductInfo
+from app.services.scrapers.base_scraper import ProductInfo
 from app.utils.price_parser import parse_price
 
 logger = get_logger(service_name)
@@ -71,12 +71,17 @@ def store_product_info(prefix: str, url: str, info: ProductInfo, label_mapping: 
 
     for field in PRICE_FIELDS:
         label = label_mapping.get(field, field)
-        price = parse_price(getattr(info, field))
-        if price is not None and price < 1e15:
+        raw = getattr(info, field)
+        price = parse_price(raw)
+
+        if price is None:
+            document[label] = None
+        elif price < 1e15:
             document[label] = price
         else:
             logger.warning(
-                "Price too large or invalid for field %s on URL %s: %s", label, url, price)
+                "Price too large for field %s on URL %s: %s", label, url, price
+            )
             document[label] = None
 
     try:

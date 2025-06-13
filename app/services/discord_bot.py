@@ -14,8 +14,8 @@ import time
 logger = get_logger(service_name)
 
 
-class DiscordBot(commands.Bot):
-    """Discord bot for handling slash commands and sending formatted messages."""
+class DiscordBot(commands.AutoShardedBot):
+    """Discord bot for handling slash commands and sending formatted messages, using automatic sharding."""
 
     def __init__(self, command_prefix: str, intents: discord.Intents):
         super().__init__(command_prefix=command_prefix, intents=intents)
@@ -32,7 +32,9 @@ class DiscordBot(commands.Bot):
 
     async def on_ready(self):
         """Handles the event when the bot is ready."""
-        print(f'Logged in as {self.user}')
+        self.logger.info("Logged in as %s (Shard %s of %s)",
+                         self.user, self.shard_id, self.shard_count)
+        await self.change_presence(activity=discord.Game("Watching prices"))
 
 
 def wait_for_vpn_connection():

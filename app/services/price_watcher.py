@@ -2,7 +2,9 @@ import discord
 from discord.ext import tasks
 from app.services.database import get_all_urls, store_product_info
 from app.utils.price_comparer import get_previous_product_info
-from app.services.scraper import ParisScraper, FalabellaScraper, SpDigitalScraper
+from app.services.scrapers.falabella_scraper import FalabellaScraper
+from app.services.scrapers.paris_scraper import ParisScraper
+from app.services.scrapers.spdigital_scraper import SpDigitalScraper
 from app.utils.price_parser import parse_price
 from app.config import PRICE_FIELDS, PARIS_LABELS, FALABELLA_LABELS, CHANNEL_ID, SPDIGITAL_LABELS, service_name
 from app.services.logger import get_logger
